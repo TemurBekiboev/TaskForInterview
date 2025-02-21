@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+    postgres:
+        image: postgres:17
+        container_name: postgres_db
+        restart: always
+        environment:
+            POSTGRES_USER: root
+            POSTGRES_PASSWORD: root
+            POSTGRES_DB: tafakkurGroupTask
+        ports:
+            - "5432:5432"
+        volumes:
+            - "postgres_data:/var/lib/postgresql/data"
+
+    elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:8.17.2
+        container_name: elasticsearch
+        environment:
+            - discovery.type=single-node
+            - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+            - ingest.geoip.downloader.enabled=false
+        ports:
+            - "9200:9200"
+            - "9300:9300"
+        volumes:
+            - elastic_data:/usr/share/elasticsearch/data
+
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: tafakkurGroupTask
+        restart: always
+        depends_on:
+            - postgres
+            - elasticsearch
+        environment:
+            DB_CONNECTION: pgsql
+            DB_HOST: postgres
+            DB_PORT: 5432
+            DB_DATABASE: tafakkurGroupTask
+            DB_USERNAME: root
+            DB_PASSWORD: root
+            ELASTICSEARCH_HOST: elasticsearch
+            ELASTICSEARCH_PORT: 9200
+        volumes:
+            - .:/var/www
+        ports:
+            - "8000:8000"
+        command: php artisan serve --host=0.0.0.0 --port=8000
+
+volumes:
+    postgres_data:
+    elastic_data:
+
+
+
+
